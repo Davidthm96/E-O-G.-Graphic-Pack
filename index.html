@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphic Pack - È O G</title>
+    <style>
+        /* ================= CSS BASE ================= */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --brand-color: #ffa300; 
+            
+            /* Griglia matematica inviolabile a 12 colonne */
+            --margin: 10px;
+            --gutter: 10px;
+            --grid-cols: 12;
+            --grid-gaps: 11;
+        }
+
+        /* BLOCCO TOTALE DELLO SCROLL NATIVO SUL BODY */
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; 
+            height: 100svh;
+            width: 100vw;
+        }
+
+        .courier-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1;
+            font-weight: 400;
+        }
+
+        /* ================= MOTORE DELL'APP - SCROLL SNAP ================= */
+        #app-wrapper {
+            width: 100%;
+            height: 100svh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Firefox */
+            -webkit-overflow-scrolling: touch; /* momentum scroll iOS */
+        }
+
+        #app-wrapper::-webkit-scrollbar { display: none; }
+
+        /* Tutte le sezioni si agganciano al top */
+        .hero,
+        .workspace,
+        .instructions-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        /* ================= 1. HERO SECTION ================= */
+        .hero {
+            height: 100svh; 
+            display: grid;
+            grid-template-rows: 1fr auto 1fr;
+            box-sizing: border-box;
+            padding: 0 var(--margin);
+            background-color: var(--bg-color);
+            overflow: hidden; 
+            position: relative; /* Fondamentale per ancorare la freccia */
+        }
+
+        .hero-top-space { grid-row: 1; }
+
+        .hero-canvas-link {
+            grid-row: 2;
+            width: 100%;
+            max-width: 450px; 
+            margin: 0 auto;
+            display: block;
+            text-decoration: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            position: relative; /* Livello per stare sopra la freccia */
+            z-index: 10;
+        }
+
+        .hero-canvas-link img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hero-canvas-link:hover img {
+            transform: scale(1.03);
+        }
+
+        .click-hint-wrapper {
+            grid-row: 3;
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+            height: 100%;
+            position: relative; /* Livello per stare sopra la freccia */
+            z-index: 10;
+        }
+
+        .click-hint {
+            text-align: center;
+            line-height: 1.5;
+            transform: translateY(0.15em); 
+        }
+
+        @keyframes pulse-text {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .blink {
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+
+        /* === FRECCE DI SFONDO === */
+        .bg-arrow {
+            position: absolute;
+            top: var(--margin);
+            left: var(--margin);
+            width: calc(100vw - (var(--margin) * 2));
+            height: calc(100svh - (var(--margin) * 2));
+            object-fit: fill; 
+            pointer-events: none; 
+            z-index: 0;
+        }
+
+        .hero-arrow {
+            filter: brightness(0) invert(96%); 
+        }
+
+        .instructions-arrow {
+            filter: brightness(0) invert(100%); 
+            transform: rotate(180deg);
+        }
+
+        /* ================= 2. WORKSPACE / EDITOR SVG ================= */
+        .workspace {
+            height: 100svh; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: var(--margin);
+            overflow: hidden; 
+            
+            background-color: #ffffff;
+            background-image: 
+                linear-gradient(45deg, #f5f5f5 25%, transparent 25%), 
+                linear-gradient(-45deg, #f5f5f5 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f5f5f5 75%), 
+                linear-gradient(-45deg, transparent 75%, #f5f5f5 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        .workspace-top {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-cols), 1fr);
+            gap: var(--gutter);
+            width: 100%;
+            flex-shrink: 0;
+            align-items: stretch;
+            z-index: 10;
+        }
+
+        /* BOTTONI CON SFONDO BIANCO */
+        .col-istruzioni {
+            grid-column: 1 / 5;
+            border: 0.5px solid var(--text-color);
+            background-color: #ffffff;
+            color: var(--text-color);
+            padding: 4px;
+            text-align: center;
+            box-sizing: border-box;
+            cursor: pointer; 
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .col-istruzioni:hover { 
+            background-color: #f5f5f5; 
+        }
+
+        .col-colore {
+            grid-column: 5 / 9;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--gutter);
+            cursor: pointer; 
+        }
+
+        .colore-label {
+            grid-column: 1 / 2;
+            border-top: 0.5px solid var(--text-color);
+            padding-top: 4px;
+            cursor: pointer;
+        }
+
+        .colore-picker-wrapper {
+            grid-column: 2 / 5; 
+            height: 100%; 
+            background-color: var(--brand-color); 
+            overflow: hidden;
+            cursor: pointer; 
+            border: 0.5px solid var(--text-color); 
+            box-sizing: border-box;
+        }
+
+        #color-picker {
+            -webkit-appearance: none;
+            border: none;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            cursor: pointer;
+            background: transparent;
+        }
+        #color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        #color-picker::-webkit-color-swatch { border: none; }
+
+        .col-scarica {
+            grid-column: 9 / 13;
+            border: 0.5px solid var(--text-color);
+            background-color: #ffffff;
+            color: var(--text-color);
+            padding: 4px;
+            text-align: center;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .col-scarica:hover { 
+            background-color: #f5f5f5; 
+        }
+
+        .workspace-center {
+            flex-grow: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(var(--grid-cols), 1fr);
+            gap: var(--gutter);
+            width: 100%;
+            margin-top: clamp(10px, 3svh, 30px);
+            margin-bottom: clamp(10px, 3svh, 30px); 
+            box-sizing: border-box;
+            align-items: center; 
+            justify-items: center; 
+        }
+
+        .center-graphic-box {
+            grid-column: 5 / 9; 
+            width: 100%; 
+            max-height: 100%; 
+            aspect-ratio: 1 / 1; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .center-graphic-box svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+        }
+
+        .workspace-bottom {
+            width: 100%;
+            flex-shrink: 0; 
+            z-index: 10;
+        }
+
+        .gallery-scroll {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: calc((100% - (var(--gutter) * var(--grid-gaps))) / var(--grid-cols));
+            gap: var(--gutter);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none; 
+        }
+
+        .gallery-scroll::-webkit-scrollbar { display: none; }
+
+        .gallery-item {
+            position: relative; 
+            aspect-ratio: 1 / 1;
+            border-top: 0.5px solid var(--text-color);
+            padding: 15%; 
+            box-sizing: border-box;
+            scroll-snap-align: start;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.3; 
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover, .gallery-item.active { opacity: 1; }
+
+        .gallery-item svg { width: 100%; height: 100%; fill: var(--text-color); }
+
+        .item-number {
+            position: absolute;
+            top: 4px; left: 0; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10px; color: var(--text-color);
+            line-height: 1; z-index: 2; 
+        }
+        
+        /* ================= 3. SEZIONE ISTRUZIONI ================= */
+        .instructions-section {
+            height: 100svh;
+            width: 100%;
+            background-color: #f5f5f5; 
+            box-sizing: border-box;
+            padding: var(--margin);
+            overflow: hidden; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-cols), 1fr);
+            gap: var(--gutter);
+            width: 100%;
+            align-items: start;
+            position: relative;
+            z-index: 10; /* Mantiene la griglia sopra la freccia bianca e il video */
+            flex-shrink: 0;
+        }
+
+        .close-instructions {
+            grid-column: 1 / 5; 
+            border: 0.5px solid var(--text-color);
+            background-color: #ffffff;
+            color: var(--text-color);
+            padding: 4px;
+            box-sizing: border-box;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 12px; 
+            line-height: 100%;
+        }
+        
+        .close-instructions:hover {
+            background-color: #f5f5f5;
+        }
+
+        .instructions-content {
+            grid-column: 5 / 13;
+            border-top: 0.5px solid var(--text-color);
+            padding: 4px 0 0 0; 
+            box-sizing: border-box;
+            font-size: 12px; 
+            line-height: 100%; 
+            font-weight: 400; 
+        }
+
+        .instructions-content p {
+            margin-top: 0;
+            margin-bottom: 10px; 
+            line-height: 100%;
+        }
+
+        .instructions-content p:last-child { margin-bottom: 0; }
+        
+        .instructions-content strong {
+            display: block;
+            margin-bottom: 4px; 
+            font-weight: 400; 
+        }
+
+        /* === VIDEO ISTRUZIONI === */
+        .instructions-video {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100vw; 
+            height: auto; 
+            mix-blend-mode: multiply;
+            pointer-events: none; 
+            z-index: 1; /* Il video è in mezzo: sopra la freccia (0) e sotto il testo (10) */
+        }
+
+        /* ================= RESPONSIVE DEGRADATION (MOBILE) ================= */
+        @media (max-width: 768px) {
+            .courier-text { font-size: 10px; }
+            
+            .hero-canvas-link {
+                display: grid;
+                grid-template-columns: repeat(var(--grid-cols), 1fr);
+                gap: var(--gutter);
+                max-width: none;
+                margin: 0;
+                width: 100%;
+            }
+            .hero-canvas-link img { 
+                grid-column: 2 / 12; 
+                width: 100%; 
+                margin: 0 auto;
+                filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
+            }
+
+            .colore-label { grid-column: 1 / 2; }
+            .colore-picker-wrapper { grid-column: 2 / 5; }
+            .col-istruzioni, .col-scarica { word-wrap: break-word; hyphens: auto; }
+            
+            .center-graphic-box { grid-column: 2 / 12; aspect-ratio: auto; height: 80%; }
+            .workspace-bottom { height: auto; max-height: 45svh; }
+
+            .gallery-scroll {
+                grid-template-rows: 1fr; 
+                grid-auto-flow: column;
+                grid-auto-columns: calc((100vw - (var(--margin) * 2) - (var(--gutter) * 5)) / 6); 
+                overflow-x: auto;
+                scroll-snap-type: x mandatory; 
+                padding-bottom: 5px;
+            }
+            
+            .gallery-item {
+                aspect-ratio: 1 / 1;
+                padding: 16px 10% 10% 10%;
+            }
+
+            .instructions-content { font-size: 10px; }
+            .close-instructions { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+
+        <header class="hero">
+            <img src="Down.svg" class="bg-arrow hero-arrow" alt="">
+
+            <div class="hero-top-space"></div>
+            <a href="#" id="enter-btn" class="hero-canvas-link">
+                <img id="folder-img" style="opacity: 0; transition: opacity 0.3s;" alt="Cartella O G">
+            </a>
+            <div class="click-hint-wrapper courier-text">
+                <div class="click-hint">
+                    È O G. Unofficial Graphics<br>–<br>
+                    <span class="blink">Clicca sull'immagine</span><br>
+                    o scrolla per selezionare e scaricare le grafiche
+                </div>
+            </div>
+        </header>
+
+        <main id="workspace" class="workspace">
+            <div class="workspace-top courier-text">
+                <div class="col-istruzioni" id="instructions-btn">ISTRUZIONI</div>
+                <label class="col-colore" for="color-picker">
+                    <span class="colore-label">Colore:</span>
+                    <div class="colore-picker-wrapper"><input type="color" id="color-picker" value="#ffa300"></div>
+                </label>
+                <div class="col-scarica" id="download-btn">SCARICA</div>
+            </div>
+
+            <div class="workspace-center">
+                <div class="center-graphic-box" id="center-graphic-box">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+            </div>
+
+            <div class="workspace-bottom">
+                <div class="gallery-scroll" id="gallery-container"></div>
+            </div>
+        </main>
+        
+        <section class="instructions-section">
+            <img src="Down.svg" class="bg-arrow instructions-arrow" alt="">
+
+            <div class="instructions-grid courier-text">
+                <div class="close-instructions" id="close-instructions-btn">EDITOR</div>
+                <div class="instructions-content">
+                    <p><strong>Istruzioni:</strong></p>
+                    <p><strong>01. SELEZIONA</strong>Nell'editor, scorri le grafiche in basso e clicca su quella che preferisci. Apparirà in grande al centro dello schermo.</p>
+                    <p><strong>02. COLORA</strong>Clicca su "Colore" in alto per cambiare la tinta della grafica. Il pattern a scacchiera significa che l'immagine finale sarà su fondo trasparente.</p>
+                    <p><strong>03. SCARICA</strong>Clicca su "Scarica" per salvare l'immagine sul tuo telefono o computer in formato .png.</p>
+                    <p><strong>04. STAMPA</strong>Ogni grafica è pronta per essere stampata su magliette, felpe, pantaloncini, cappellini, calze, adesivi, poster, cover...</p>
+                     <p><br>Clicca <a href="Img/EOG_SVG_Pack.zip" download="EOG_SVG_Pack.zip">qui</a> per scaricare tutte le grafiche in formato vettoriale. Clicca <a href="https://open.spotify.com/track/0qFzTGufPnqkI4GrAwXCg1?si=87be229dae29482d">qui</a> per ascoltare È O G.</p>
+                     <p><br>Segui G.Mineiro su <a href="https://www.instagram.com/g._mineiro/">Instagram</a>  e <a href="https://www.tiktok.com/@g.mineiro?_r=1&_t=ZN-96FrVhpBQCE">Tik Tok</a>.</p>
+                </div>
+            </div>
+            
+            <video class="instructions-video" src="Img/video/EOG_vid.mp4" autoplay loop muted playsinline></video>
+        </section>
+    </div>
+
+    <script>
+        // ================= CARTELLA RANDOM AUTO-DISCOVERY =================
+        async function pickRandomFolder() {
+            const folderImg = document.getElementById('folder-img');
+            const MAX_FOLDERS = 50; 
+            const found = [];
+
+            const checks = [];
+            for (let i = 1; i <= MAX_FOLDERS; i++) {
+                const padded = i.toString().padStart(2, '0');
+                const url = `Img/Folder_${padded}.png`;
+                checks.push(
+                    fetch(url, { method: 'HEAD', cache: 'no-store' })
+                        .then(res => ({ index: i, ok: res.ok, url }))
+                        .catch(() => ({ index: i, ok: false, url }))
+                );
+            }
+
+            const results = await Promise.all(checks);
+
+            for (const r of results) {
+                if (r.ok) {
+                    found.push(r.url);
+                } else {
+                    break;
+                }
+            }
+
+            if (found.length === 0) {
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * found.length);
+            const finalImageSrc = found[randomIndex];
+
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                folderImg.src = finalImageSrc;
+                folderImg.style.opacity = 1; 
+            };
+            tempImg.src = finalImageSrc;
+        }
+
+        pickRandomFolder();
+
+        // ================= NAVIGAZIONE TRA SEZIONI =================
+        const enterBtn = document.getElementById('enter-btn');
+        const instructionsBtn = document.getElementById('instructions-btn');
+        const closeInstructionsBtn = document.getElementById('close-instructions-btn');
+
+        const heroSection = document.querySelector('.hero');
+        const workspaceSection = document.getElementById('workspace');
+        const instructionsSection = document.querySelector('.instructions-section');
+
+        enterBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            workspaceSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        instructionsBtn.addEventListener('click', () => {
+            instructionsSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        closeInstructionsBtn.addEventListener('click', () => {
+            workspaceSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // ================= EDITOR SVG =================
+        const colorPicker = document.getElementById('color-picker');
+        const centerGraphicBox = document.getElementById('center-graphic-box');
+        const galleryContainer = document.getElementById('gallery-container');
+        const downloadBtn = document.getElementById('download-btn');
+
+        const totalSVGs = 35;
+        let currentSvgNumber = "01"; 
+
+        function applyColorToSVG(svgElement, colorCode) {
+            svgElement.querySelectorAll('path, rect, circle, polygon, ellipse, line').forEach(shape => {
+                shape.removeAttribute('fill');
+                shape.removeAttribute('stroke');
+                shape.setAttribute('fill', colorCode);
+            });
+            svgElement.setAttribute('fill', colorCode);
+        }
+
+        function cropSVGToContent(svgElement) {
+            requestAnimationFrame(() => {
+                try {
+                    const bbox = svgElement.getBBox();
+                    if(bbox.width > 0 && bbox.height > 0) {
+                        svgElement.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+                    }
+                } catch(e) {}
+            });
+        }
+
+        async function loadAllSVGs() {
+            for(let i = 1; i <= totalSVGs; i++) {
+                let num = i.toString().padStart(2, '0');
+                let div = document.createElement('div');
+                div.className = `gallery-item ${i === 1 ? 'active' : ''}`;
+                div.innerHTML = `<span class="item-number">${num}/${totalSVGs}</span>`;
+
+                try {
+                    let response = await fetch(`Img/SVG/EOG-${num}.svg`);
+                    if(response.ok) {
+                        let svgText = await response.text();
+                        let parser = new DOMParser();
+                        let svgElement = parser.parseFromString(svgText, "image/svg+xml").documentElement;
+                        svgElement.removeAttribute('width');
+                        svgElement.removeAttribute('height');
+                        div.appendChild(svgElement);
+                        cropSVGToContent(svgElement);
+                    }
+                } catch(e) {}
+
+                div.addEventListener('click', () => {
+                    document.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    currentSvgNumber = num;
+                    const svgToCopy = div.querySelector('svg');
+                    if(svgToCopy) {
+                        const clonedSvg = svgToCopy.cloneNode(true);
+                        applyColorToSVG(clonedSvg, colorPicker.value);
+                        centerGraphicBox.innerHTML = '';
+                        centerGraphicBox.appendChild(clonedSvg);
+                    }
+                });
+                galleryContainer.appendChild(div);
+                if(i === 1) setTimeout(() => div.click(), 100);
+            }
+        }
+
+        loadAllSVGs();
+
+        colorPicker.addEventListener('input', (e) => {
+            const selectedColor = e.target.value;
+            e.target.parentElement.style.backgroundColor = selectedColor; 
+            const centerSvg = centerGraphicBox.querySelector('svg');
+            if(centerSvg) applyColorToSVG(centerSvg, selectedColor);
+        });
+
+        // ================= DOWNLOAD PNG =================
+        downloadBtn.addEventListener('click', () => {
+            const centerSvg = centerGraphicBox.querySelector('svg');
+            if(!centerSvg) return; 
+
+            const viewBox = centerSvg.getAttribute('viewBox');
+            let aspectRatio = 1; 
+
+            if (viewBox) {
+                const parts = viewBox.split(/[\s,]+/).map(Number);
+                const vbWidth = parts[2];
+                const vbHeight = parts[3];
+                if (vbWidth > 0 && vbHeight > 0) {
+                    aspectRatio = vbWidth / vbHeight;
+                }
+            }
+
+            const SHORT_SIDE = 4000;
+            let exportWidth, exportHeight;
+
+            if (aspectRatio >= 1) {
+                exportHeight = SHORT_SIDE;
+                exportWidth = Math.round(SHORT_SIDE * aspectRatio);
+            } else {
+                exportWidth = SHORT_SIDE;
+                exportHeight = Math.round(SHORT_SIDE / aspectRatio);
+            }
+
+            const svgData = new XMLSerializer().serializeToString(centerSvg);
+            const exportCanvas = document.createElement("canvas");
+            exportCanvas.width = exportWidth;
+            exportCanvas.height = exportHeight;
+            const exportCtx = exportCanvas.getContext("2d");
+
+            const img = new Image();
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+            img.onload = function() {
+                exportCtx.drawImage(img, 0, 0, exportWidth, exportHeight);
+                const downloadLink = document.createElement("a");
+                const hexName = colorPicker.value.replace('#', '').toUpperCase();
+                
+                // Formatta il nome progressivo con la data
+                const date = new Date();
+                const d = date.getDate().toString().padStart(2, '0');
+                const mo = (date.getMonth() + 1).toString().padStart(2, '0');
+                const yyyy = date.getFullYear();
+                const dateStr = `${yyyy}${mo}${d}`;
+                
+                let dlNum = '01'; 
+                if (typeof downloadCounter !== 'undefined') {
+                    dlNum = downloadCounter.toString().padStart(2, '0');
+                    downloadCounter++;
+                }
+                
+                downloadLink.download = `EOG_${currentSvgNumber}_${hexName}.png`;
+                downloadLink.href = exportCanvas.toDataURL("image/png");
+                downloadLink.click();
+            };
+        });
+    </script>
+</body>
+</html>
